@@ -1,0 +1,36 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+!.env.example
+credentials/
+*.pem
+*.key
+
+# Sessões e autenticação do navegador
+storageState.json
+storage-state.json
+.auth/
+playwright/.auth/
+
+# Logs
+logs/
+*.log
+
+# Capturas e dados gerados
+screenshots/
+captures/
+data/
+
+# Backups
+backups/
+*.bak
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+# Backups de arquivos
+*.bak
+*.bak-*

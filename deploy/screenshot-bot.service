@@ -1,0 +1,23 @@
+[Unit]
+Description=Bot de captura de tela e envio ao WhatsApp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=screenshot-bot
+Group=screenshot-bot
+WorkingDirectory=/opt/screenshot-bot
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/screenshot-bot/.env
+ExecStart=/usr/bin/node /opt/screenshot-bot/src/app.js
+Restart=on-failure
+RestartSec=15
+StartLimitIntervalSec=300
+StartLimitBurst=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

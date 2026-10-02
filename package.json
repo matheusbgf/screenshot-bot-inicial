@@ -1,0 +1,20 @@
+{
+  "name": "screenshot-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot 24/7 para capturar uma tela de um sistema web e enviar ao WhatsApp",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "check": "node --check src/app.js && node --check src/config/index.js && node --check src/browser/client.js && node --check src/browser/capture.js && node --check src/whatsapp/client.js && node --check src/whatsapp/sender.js && node --check src/scheduler/index.js && node --check src/utils/logger.js && node --check src/utils/retry.js && node --check src/storage/state.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "playwright": "^1.51.0",
+    "whatsapp-web.js": "^1.26.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
