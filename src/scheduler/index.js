@@ -2,15 +2,18 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const { config } = require("../config");
+const { nextScheduledAt } = require("./schedule");
 const logger = require("../utils/logger");
-const { openSystem } = require("../browser/client");
+const { openSystem, waitForPageToSettle } = require("../browser/client");
 const { capture } = require("../browser/capture");
 const { sendScreenshot } = require("../whatsapp/sender");
-const { withRetry, sleep } = require("../utils/retry");
+const { withRetry } = require("../utils/retry");
 const { readState, writeState } = require("../storage/state");
 
 let running = false;
 let stopping = false;
+let scheduledTimer = null;
+let wakeScheduledWait = null;
 
 async function execute() {
   if (running) {
@@ -40,11 +43,12 @@ async function execute() {
           logger.info("Aguardando carregamento da página", {
             runId,
             url: opened.page.url(),
-            waitMs: 30000
+            networkIdleTimeoutMs: config.networkIdleTimeoutMs,
+            settleWaitMs: config.pageSettleWaitMs
           });
 
-          // Aguarda 30 segundos para a página renderizar.
-          await opened.page.waitForTimeout(30000);
+          // Aguarda os dados carregados pela aplicação antes de capturar.
+          await waitForPageToSettle(opened.page, runId);
 
           logger.info("Página pronta para captura", {
             runId,
@@ -103,14 +107,27 @@ async function execute() {
 }
 
 async function startScheduler() {
-  if (config.runOnStart) {
-    await execute();
-  }
-
-  const intervalMs = config.intervalMinutes * 60 * 1000;
-
   while (!stopping) {
-    await sleep(intervalMs);
+    const scheduledAt = nextScheduledAt(
+      new Date(),
+      config.scheduleTimes,
+      config.timezone
+    );
+    const delayMs = Math.max(0, scheduledAt.getTime() - Date.now());
+
+    logger.info("Próximo checkpoint programado", {
+      scheduledAt: scheduledAt.toISOString(),
+      timezone: config.timezone
+    });
+
+    await new Promise(resolve => {
+      wakeScheduledWait = resolve;
+      scheduledTimer = setTimeout(() => {
+        scheduledTimer = null;
+        wakeScheduledWait = null;
+        resolve();
+      }, delayMs);
+    });
 
     if (!stopping) {
       await execute();
@@ -120,6 +137,17 @@ async function startScheduler() {
 
 function stopScheduler() {
   stopping = true;
+
+  if (scheduledTimer) {
+    clearTimeout(scheduledTimer);
+    scheduledTimer = null;
+  }
+
+  if (wakeScheduledWait) {
+    const wake = wakeScheduledWait;
+    wakeScheduledWait = null;
+    wake();
+  }
 }
 
 module.exports = {

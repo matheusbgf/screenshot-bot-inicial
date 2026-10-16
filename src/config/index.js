@@ -34,12 +34,26 @@ function optional(name) {
   return value || "";
 }
 
+function timeList(name, fallback) {
+  const value = optional(name) || fallback;
+  const values = value.split(",").map(item => item.trim());
+
+  if (
+    values.some(item => !/^(?:[01]\d|2[0-3]):00$/.test(item)) ||
+    new Set(values).size !== values.length
+  ) {
+    throw new Error(`Configuração inválida: ${name}. Use horários HH:00 sem duplicatas.`);
+  }
+
+  return values.sort();
+}
+
+const defaultScheduleTimes = "01:00,04:00,07:00,10:00,13:00,16:00,19:00,22:00";
+
 const config = {
   timezone: optional("TIMEZONE") || "America/Sao_Paulo",
 
-  intervalMinutes: number("INTERVAL_MINUTES", 60),
-
-  runOnStart: bool("RUN_ON_START", true),
+  scheduleTimes: timeList("SCHEDULE_TIMES", defaultScheduleTimes),
 
   systemUrl: optional("SYSTEM_URL"),
 
@@ -52,9 +66,17 @@ const config = {
 
   pageReadySelector: optional("PAGE_READY_SELECTOR"),
 
-  screenshotSelector: optional("SCREENSHOT_SELECTOR"),
+  networkIdleTimeoutMs: number("NETWORK_IDLE_TIMEOUT_MS", 45000),
 
-  screenshotFullPage: bool("SCREENSHOT_FULL_PAGE", false),
+  pageSettleWaitMs: number("PAGE_SETTLE_WAIT_MS", 60000),
+
+  screenshotWidth: number("SCREENSHOT_WIDTH", 1920),
+
+  screenshotHeight: number("SCREENSHOT_HEIGHT", 1080),
+
+  screenshotCropX: number("SCREENSHOT_CROP_X", 360, 0),
+
+  screenshotCropY: number("SCREENSHOT_CROP_Y", 116, 0),
 
   loginUrl: optional("LOGIN_URL"),
 
@@ -79,7 +101,7 @@ const config = {
 
   whatsappMessage: (
     optional("WHATSAPP_MESSAGE") ||
-    "Segue o relatório atualizado:"
+    "Checkpoint - ELSYS ONE [NETYLINK]\\n\\n⏱️ Período atual do monitoramento.\\n\\nEquipe BOC\\nCore | Technologies"
   ).replace(/\\n/g, "\n"),
 
   whatsappAuthDir: path.resolve(
@@ -110,6 +132,12 @@ const config = {
 };
 
 function validate() {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: config.timezone }).format();
+  } catch {
+    throw new Error("TIMEZONE inválido; use um identificador IANA, como America/Sao_Paulo.");
+  }
+
   if (
     !config.systemUrl ||
     !/^https?:\/\//i.test(config.systemUrl)
@@ -144,6 +172,12 @@ function validate() {
     throw new Error(
       "Para login automático, preencha USERNAME, PASSWORD, " +
       "USERNAME_SELECTOR, PASSWORD_SELECTOR e LOGIN_SUBMIT_SELECTOR."
+    );
+  }
+
+  if (config.username && !config.postLoginReadySelector) {
+    throw new Error(
+      "Para login headless, preencha POST_LOGIN_READY_SELECTOR com um elemento que só apareça após a autenticação."
     );
   }
 }

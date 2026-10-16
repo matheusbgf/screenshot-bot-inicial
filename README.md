@@ -1,6 +1,6 @@
 # Screenshot Bot 24/7
 
-Modelo inicial de bot para abrir um sistema web, capturar uma página ou elemento e enviar a imagem para um grupo do WhatsApp a cada 60 minutos.
+Bot para abrir um sistema web, capturar o sumário em 1920x1080 e enviar a imagem para um grupo do WhatsApp nos horários configurados.
 
 ## Requisitos
 
@@ -29,24 +29,24 @@ Modelo inicial de bot para abrir um sistema web, capturar uma página ou element
    npm start
    ```
 
-6. Na primeira inicialização, escaneie o QR Code do WhatsApp no terminal. A sessão será persistida em `data/whatsapp-auth/`. Proteja esse diretório: ele permite acesso à conta do WhatsApp.
-7. Confirme o envio para o grupo correto antes de deixar o bot operando.
+6. O envio ativo usa a API externa configurada por `API_TOKEN` no `.env` compartilhado e `WHATSAPP_API_URL` (por padrão, `http://127.0.0.1:3241`). Este bot não autentica o WhatsApp Web nem pede QR Code; a sessão do serviço da API é gerenciada fora deste projeto.
+7. Confirme o grupo e o token configurados antes de habilitar a rotina.
 
 ## Configurar a captura
 
-- `SCREENSHOT_SELECTOR`: seletor CSS do elemento a capturar. Deixe vazio para capturar a página.
-- `SCREENSHOT_FULL_PAGE=true`: captura a página inteira quando não há seletor.
-- `PAGE_READY_SELECTOR`: seletor que deve estar visível antes da captura.
+- A imagem usa o recorte da área de sumário e tem exatamente `SCREENSHOT_WIDTH` x `SCREENSHOT_HEIGHT` pixels.
+- `SCREENSHOT_CROP_X` e `SCREENSHOT_CROP_Y` definem o início do recorte. Os valores padrão (`360`, `116`) retiram o menu lateral e a barra superior observados no ElsysOne.
+- `PAGE_READY_SELECTOR`: seletor opcional que deve estar visível antes da captura. O bot também exige que o título `SUMÁRIO` esteja dentro do recorte, para evitar enviar uma tela de bloqueio ou uma área errada.
+- Antes da captura, o bot aguarda a rede ficar ociosa por até `NETWORK_IDLE_TIMEOUT_MS` e depois espera `PAGE_SETTLE_WAIT_MS` para a aplicação terminar de renderizar informações dinâmicas. Se a página mantiver conexões abertas, o limite de rede é registrado e a espera final ainda acontece.
 - `SYSTEM_URL`: endereço da página final a capturar.
-- Os seletores dependem do HTML real do sistema e precisam ser ajustados após inspeção autorizada da página.
 
 ## Login
 
-O login automático é opcional. Para formulário simples, configure `LOGIN_URL`, `USERNAME`, `PASSWORD`, `USERNAME_SELECTOR`, `PASSWORD_SELECTOR` e `LOGIN_SUBMIT_SELECTOR`. Se houver SSO, MFA, CAPTCHA ou políticas corporativas, não tente contorná-los: use o fluxo aprovado pela organização e adapte a autenticação conforme permitido.
+O serviço usa `data/auth-state.json` em modo headless quando a sessão já existe. Para um formulário simples, também pode fazer o primeiro login headless: configure `LOGIN_URL`, `USERNAME`, `PASSWORD`, `USERNAME_SELECTOR`, `PASSWORD_SELECTOR`, `LOGIN_SUBMIT_SELECTOR` e `POST_LOGIN_READY_SELECTOR`. O último seletor precisa identificar um elemento que só aparece depois da autenticação; a sessão é então salva com permissão restrita. `node scripts/authenticate.js` valida o acesso sem abrir janela. SSO, MFA, CAPTCHA e bloqueios corporativos não são contornados; nesses casos, é necessária uma credencial de serviço ou autorização do administrador. O token WhatsApp é independente e autentica a chamada à API remota; este projeto não executa login de WhatsApp Web.
 
 ## Agendamento
 
-Por padrão, `RUN_ON_START=true` executa uma captura logo após o WhatsApp ficar pronto e depois espera 60 minutos entre execuções. Isso significa intervalo contado a partir do término da execução, não alinhamento exato com cada hora do relógio.
+`SCHEDULE_TIMES` define os horários locais no fuso `TIMEZONE`. O padrão executa às 01:00, 04:00, 07:00, 10:00, 13:00, 16:00, 19:00 e 22:00. O bot espera o próximo horário e não dispara uma captura ao iniciar. Se uma captura passar do próximo horário, o agendador aguarda o horário seguinte, sem sobrepor execuções.
 
 ## Logs
 
@@ -61,11 +61,11 @@ journalctl -u screenshot-bot.service --since today
 
 **Não instale diretamente em produção sem revisão e autorização.** Antes de qualquer atualização de serviço existente, faça backup da configuração e registre como reverter.
 
-O arquivo `deploy/screenshot-bot.service` é um modelo. Revise caminhos, usuário, políticas locais e dependências antes de instalar. `whatsapp-web.js` depende de automação do WhatsApp Web e pode ser afetado por mudanças do serviço; para uso corporativo crítico, avalie as políticas internas e a API oficial.
+O arquivo `deploy/screenshot-bot.service` é um modelo. Revise caminhos, usuário, políticas locais e dependências antes de instalar. O envio deste bot usa a API externa e requer que ela esteja disponível e autorizada; este projeto não altera nem reinicia esse serviço.
 
 ## Segurança operacional
 
-- Não versione `.env`, `data/` ou a sessão de autenticação do WhatsApp.
+- Não versione `.env` nem `data/`; eles podem conter credenciais e sessões do sistema web.
 - Restrinja as permissões do `.env` e do diretório `data/` ao usuário do serviço.
 - Não registre senhas, conteúdo de páginas ou informações sensíveis nos logs.
 - As capturas podem conter dados corporativos: compartilhe somente no grupo autorizado e mantenha retenção mínima.

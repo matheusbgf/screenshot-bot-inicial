@@ -1,53 +1,17 @@
 require('dotenv').config();
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { chromium } = require('playwright');
+const { config } = require('../src/config');
+const { openSystem, waitForPageToSettle } = require('../src/browser/client');
+const { capture } = require('../src/browser/capture');
 
 async function main() {
-  const authFile = path.resolve(
-    process.env.AUTH_STATE_FILE || './data/auth-state.json'
-  );
-
-  const url =
-    process.env.SYSTEM_URL || 'https://elsysone.com/pt-BR/home';
-
-  if (!fs.existsSync(authFile)) {
-    throw new Error(`Arquivo de sessão não encontrado: ${authFile}`);
-  }
-
-  const outputDir = path.resolve('./data/screenshots');
-  fs.mkdirSync(outputDir, { recursive: true });
-
-  const outputFile = path.join(outputDir, 'home-test.png');
-
-  const browser = await chromium.launch({
-    headless: false
-  });
+  const { browser, page } = await openSystem();
 
   try {
-    const context = await browser.newContext({
-      storageState: authFile,
-      viewport: { width: 1920, height: 1080 }
-    });
-
-    const page = await context.newPage();
-    page.setDefaultNavigationTimeout(45000);
-
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
-
-    console.log('URL final:', page.url());
-    console.log('Título:', await page.title());
-
-    await page.screenshot({
-      path: outputFile,
-      fullPage: true,
-      animations: 'disabled'
-    });
-
+    await waitForPageToSettle(page, 'manual');
+    const outputFile = await capture(page, `manual-${Date.now()}`);
     console.log('Screenshot salvo em:', outputFile);
-    console.log('Verifique visualmente se a página está autenticada.');
+    console.log(`Dimensões configuradas: ${config.screenshotWidth}x${config.screenshotHeight}`);
   } finally {
     await browser.close();
   }

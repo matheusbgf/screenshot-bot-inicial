@@ -6,7 +6,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "check": "node --check src/app.js && node --check src/config/index.js && node --check src/browser/client.js && node --check src/browser/capture.js && node --check src/whatsapp/client.js && node --check src/whatsapp/sender.js && node --check src/scheduler/index.js && node --check src/utils/logger.js && node --check src/utils/retry.js && node --check src/storage/state.js"
+    "check": "node --check src/app.js && node --check src/config/index.js && node --check src/browser/client.js && node --check src/browser/capture.js && node --check src/whatsapp/client.js && node --check src/whatsapp/sender.js && node --check src/scheduler/index.js && node --check src/scheduler/schedule.js && node --check src/utils/logger.js && node --check src/utils/retry.js && node --check src/storage/state.js && node --check scripts/test-capture.js && node --check tests/schedule.test.js",
+    "test": "node tests/schedule.test.js"
   },
   "engines": {
     "node": ">=20"
