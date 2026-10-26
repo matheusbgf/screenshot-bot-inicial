@@ -29,7 +29,7 @@ async function saveAuthState(context) {
 }
 
 async function authenticateWithConfiguredForm(page, context) {
-  if (!config.username) return false;
+  if (!config.headless || !config.username) return false;
 
   if (!config.postLoginReadySelector) {
     throw new Error(
@@ -99,7 +99,7 @@ async function authenticateWithConfiguredForm(page, context) {
   return true;
 }
 
-async function openSystem() {
+async function openSystem({ waitForReady = true } = {}) {
   if (!config.headless) {
     logger.info("Iniciando navegador em modo gráfico para inspeção.");
   }
@@ -112,7 +112,7 @@ async function openSystem() {
       await fs.access(config.authStateFile);
       storageState = config.authStateFile;
     } catch {
-      logger.info("Arquivo de sessão ausente; tentando o login headless configurado, se disponível.");
+      logger.info(config.headless ? "Arquivo de sessão ausente; tentando o login headless configurado, se disponível." : "Arquivo de sessão ausente; aguardando login manual na janela visível.");
     }
 
     context = await browser.newContext({
@@ -133,7 +133,7 @@ async function openSystem() {
     const authenticatedByForm =
       await authenticateWithConfiguredForm(page, context);
 
-    if (config.pageReadySelector) {
+    if (config.pageReadySelector && waitForReady) {
       await page.locator(config.pageReadySelector).waitFor({ state: "visible" });
     }
     logger.info("Sistema web carregado", { origin: new URL(config.systemUrl).origin });
@@ -164,4 +164,4 @@ async function waitForPageToSettle(page, runId) {
   await page.waitForTimeout(config.pageSettleWaitMs);
 }
 
-module.exports = { openSystem, waitForPageToSettle };
+module.exports = { openSystem, waitForPageToSettle, saveAuthState };

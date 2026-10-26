@@ -42,7 +42,7 @@ Bot para abrir um sistema web, capturar o sumário em 1920x1080 e enviar a image
 
 ## Login
 
-O serviço usa `data/auth-state.json` em modo headless quando a sessão já existe. Para um formulário simples, também pode fazer o primeiro login headless: configure `LOGIN_URL`, `USERNAME`, `PASSWORD`, `USERNAME_SELECTOR`, `PASSWORD_SELECTOR`, `LOGIN_SUBMIT_SELECTOR` e `POST_LOGIN_READY_SELECTOR`. O último seletor precisa identificar um elemento que só aparece depois da autenticação; a sessão é então salva com permissão restrita. `node scripts/authenticate.js` valida o acesso sem abrir janela. SSO, MFA, CAPTCHA e bloqueios corporativos não são contornados; nesses casos, é necessária uma credencial de serviço ou autorização do administrador. O token WhatsApp é independente e autentica a chamada à API remota; este projeto não executa login de WhatsApp Web.
+O serviço usa `data/auth-state.json` em modo headless quando existe uma sessão. Para criar a sessão manualmente, defina `HEADLESS=false` e execute `node scripts/authenticate.js`: o Chromium abrirá uma janela; faça login até `SUMÁRIO` aparecer e a sessão será salva localmente. Instale o navegador com `npx playwright install chromium`. Para login automático headless em formulários simples, defina `HEADLESS=true` e configure `LOGIN_URL`, `USERNAME`, `PASSWORD`, `USERNAME_SELECTOR`, `PASSWORD_SELECTOR`, `LOGIN_SUBMIT_SELECTOR` e `POST_LOGIN_READY_SELECTOR`. O último seletor precisa identificar um elemento que só aparece após a autenticação; a sessão é então salva com permissão restrita. SSO, MFA, CAPTCHA e bloqueios corporativos não são contornados. O token WhatsApp é independente e autentica a chamada à API remota; este projeto não executa login de WhatsApp Web.
 
 ## Agendamento
 

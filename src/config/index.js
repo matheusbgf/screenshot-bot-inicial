@@ -167,14 +167,14 @@ function validate() {
     config.loginSubmitSelector
   ];
 
-  if (loginFields.some(Boolean) && !loginFields.every(Boolean)) {
+  if (config.headless && loginFields.some(Boolean) && !loginFields.every(Boolean)) {
     throw new Error(
       "Para login automático, preencha USERNAME, PASSWORD, " +
       "USERNAME_SELECTOR, PASSWORD_SELECTOR e LOGIN_SUBMIT_SELECTOR."
     );
   }
 
-  if (config.username && !config.postLoginReadySelector) {
+  if (config.headless && config.username && !config.postLoginReadySelector) {
     throw new Error(
       "Para login headless, preencha POST_LOGIN_READY_SELECTOR com um elemento que só apareça após a autenticação."
     );
