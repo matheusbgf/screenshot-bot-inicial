@@ -1,10 +1,9 @@
 
-require("dotenv").config();
-
+const dotenv = require("dotenv");
 const path = require("node:path");
 
-require("dotenv").config({
-  path: path.resolve(__dirname, "../../../.env")
+dotenv.config({
+  path: path.resolve(__dirname, "../../.env")
 });
 
 function bool(name, fallback = false) {
@@ -149,7 +148,7 @@ function validate() {
 
   if (!config.whatsappApiToken) {
     throw new Error(
-      "API_TOKEN não encontrado no .env compartilhado."
+      "API_TOKEN não encontrado no .env do projeto."
     );
   }
 
