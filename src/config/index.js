@@ -68,7 +68,7 @@ const config = {
 
   networkIdleTimeoutMs: number("NETWORK_IDLE_TIMEOUT_MS", 45000),
 
-  pageSettleWaitMs: number("PAGE_SETTLE_WAIT_MS", 60000),
+  pageSettleWaitMs: number("PAGE_SETTLE_WAIT_MS", 120000),
 
   screenshotWidth: number("SCREENSHOT_WIDTH", 1920),
 

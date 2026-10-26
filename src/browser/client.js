@@ -101,9 +101,7 @@ async function authenticateWithConfiguredForm(page, context) {
 
 async function openSystem() {
   if (!config.headless) {
-    throw new Error(
-      "HEADLESS=true é obrigatório para este fluxo. Nenhuma janela foi aberta."
-    );
+    logger.info("Iniciando navegador em modo gráfico para inspeção.");
   }
 
   const browser = await chromium.launch({ headless: config.headless });
